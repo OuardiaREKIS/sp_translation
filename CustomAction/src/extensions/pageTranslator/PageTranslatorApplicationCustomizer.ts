@@ -43,6 +43,15 @@ export default class PageTranslatorApplicationCustomizer extends BaseApplication
     }
     container.innerHTML = "";
 
+    // Pas de bouton pendant la creation ou l'edition d'une page (galerie de
+    // modeles _layouts, page en mode edition) : la page n'est pas encore
+    // aboutie et une traduction produirait des copies vides ou malformees.
+    const search = window.location.search.toLowerCase();
+    const path = window.location.pathname.toLowerCase();
+    if (search.indexOf("mode=edit") !== -1 || path.indexOf("/_layouts/") !== -1) {
+      return;
+    }
+
     const pageName = this.currentPageName();
     if (!pageName) {
       return;

@@ -44,6 +44,10 @@ $languageCodes = @()
 
 foreach ($language in $languages) {
     $languageIds += $language.id
+    # ATTENTION au sens des champs : sp = nom COURT du dossier de langue
+    # ("fr", "de", "zh-chs"), PAS un code culture. az = code Azure Translator.
+    # Les codes culture pour l'API translations/create ("fr-fr", "zh-cn")
+    # sont derives du LCID ($language.id), jamais de sp.
     $languageCodes += [PSCustomObject]@{
         sp = $language.code
         az = $language.azCode

@@ -25,11 +25,31 @@ export default class PageTranslatorApplicationCustomizer extends BaseApplication
   private placeholder: PlaceholderContent;
   private dialogHost: HTMLDivElement;
 
+  private lastUrl: string = "";
+
   public onInit(): Promise<void> {
     Log.info(LOG_SOURCE, "Initialized PageTranslatorApplicationCustomizer");
     initializeIcons();
     this.context.application.navigatedEvent.add(this, this.onNavigated);
+    // Certaines transitions (galerie de modeles, entree/sortie du mode
+    // edition) ne declenchent pas navigatedEvent : on surveille l'URL
+    // pour re-evaluer l'affichage du bouton a chaque changement.
+    this.lastUrl = window.location.href;
+    window.setInterval(() => {
+      if (window.location.href !== this.lastUrl) {
+        this.lastUrl = window.location.href;
+        this.onNavigated();
+      }
+    }, 1000);
     return Promise.resolve();
+  }
+
+  // Contexte de creation/edition : galerie de modeles (_layouts) ou page en
+  // mode edition. Le bouton ne doit jamais s'afficher ni agir dans ce cas.
+  private isAuthoringContext(): boolean {
+    const search = window.location.search.toLowerCase();
+    const path = window.location.pathname.toLowerCase();
+    return search.indexOf("mode=edit") !== -1 || path.indexOf("/_layouts/") !== -1;
   }
 
   private onNavigated(): void {
@@ -43,12 +63,9 @@ export default class PageTranslatorApplicationCustomizer extends BaseApplication
     }
     container.innerHTML = "";
 
-    // Pas de bouton pendant la creation ou l'edition d'une page (galerie de
-    // modeles _layouts, page en mode edition) : la page n'est pas encore
-    // aboutie et une traduction produirait des copies vides ou malformees.
-    const search = window.location.search.toLowerCase();
-    const path = window.location.pathname.toLowerCase();
-    if (search.indexOf("mode=edit") !== -1 || path.indexOf("/_layouts/") !== -1) {
+    // Pas de bouton pendant la creation ou l'edition d'une page : la page
+    // n'est pas aboutie, une traduction produirait des copies malformees.
+    if (this.isAuthoringContext()) {
       return;
     }
 
@@ -135,6 +152,13 @@ export default class PageTranslatorApplicationCustomizer extends BaseApplication
   }
 
   private openDialog(pageName: string): void {
+    // Filet de securite au clic : si on est entre-temps passe en mode
+    // creation/edition (galerie ouverte sans navigation), on ne traduit
+    // pas et on re-evalue l'affichage du bouton (qui va se cacher).
+    if (this.isAuthoringContext()) {
+      this.onNavigated();
+      return;
+    }
     this.renderDialog({ isOpen: true, pages: [pageName] });
   }
 

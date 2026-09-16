@@ -1,0 +1,5 @@
+{
+  "properties": {
+    "funcAppUrl": "https://<NOM-FUNCTION-APP>.azurewebsites.net/api/httptriggersptranslator?code=<CLE-DE-FONCTION>"
+  }
+}

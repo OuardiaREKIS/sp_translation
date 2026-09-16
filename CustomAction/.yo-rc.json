@@ -1,0 +1,22 @@
+{
+  "@microsoft/generator-sharepoint": {
+    "plusBeta": false,
+    "isCreatingSolution": true,
+    "nodeVersion": "22.20.0",
+    "sdksVersions": {
+      "@microsoft/microsoft-graph-client": "3.0.2",
+      "@microsoft/teams-js": "2.24.0"
+    },
+    "version": "1.21.1",
+    "libraryName": "sp-translator",
+    "libraryId": "8bb3245f-8aaf-4f85-94bd-2379c53f098b",
+    "environment": "spo",
+    "packageManager": "npm",
+    "solutionName": "SP-Translator",
+    "solutionShortDescription": "SP-Translator is an extension to create page translation and translate them automatically",
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "componentType": "extension",
+    "extensionType": "ListViewCommandSet"
+  }
+}

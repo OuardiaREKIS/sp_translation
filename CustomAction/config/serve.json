@@ -1,0 +1,25 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/spfx-serve.schema.json",
+  "port": 4321,
+  "https": true,
+  "serveConfigurations": {
+    "default": {
+      "pageUrl": "https://3whd6t.sharepoint.com/SitePages/test-mosaic.aspx",
+      "customActions": {
+        "5a7c31f0-9d84-4c2e-b1a6-3f8e52d90c47": {
+          "location": "ClientSideExtension.ApplicationCustomizer",
+          "properties": {}
+        }
+      }
+    },
+    "commandSet": {
+      "pageUrl": "https://3whd6t.sharepoint.com/SitePages/Forms/ByAuthor.aspx",
+      "customActions": {
+        "ec203189-1da1-424e-9ebb-b4bc9ac12131": {
+          "location": "ClientSideExtension.ListViewCommandSet",
+          "properties": {}
+        }
+      }
+    }
+  }
+}

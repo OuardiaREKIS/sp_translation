@@ -1,0 +1,26 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/config.2.0.schema.json",
+  "version": "2.0",
+  "bundles": {
+    "translator-command-set": {
+      "components": [
+        {
+          "entrypoint": "./lib/extensions/translator/TranslatorCommandSet.js",
+          "manifest": "./src/extensions/translator/TranslatorCommandSet.manifest.json"
+        }
+      ]
+    },
+    "page-translator-application-customizer": {
+      "components": [
+        {
+          "entrypoint": "./lib/extensions/pageTranslator/PageTranslatorApplicationCustomizer.js",
+          "manifest": "./src/extensions/pageTranslator/PageTranslatorApplicationCustomizer.manifest.json"
+        }
+      ]
+    }
+  },
+  "externals": {},
+  "localizedResources": {
+    "TranslatorCommandSetStrings": "lib/extensions/translator/loc/{locale}.js"
+  }
+}

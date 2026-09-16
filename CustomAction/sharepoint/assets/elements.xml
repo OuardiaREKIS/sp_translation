@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Elements xmlns="http://schemas.microsoft.com/sharepoint/">
+<!-- RegistrationId : 101 to test in local and 119 to deploy on sharepoint -->
+    <CustomAction
+        Title="Translator"
+        RegistrationId="119"
+        RegistrationType="List"
+        Location="ClientSideExtension.ListViewCommandSet"
+        ClientSideComponentId="ec203189-1da1-424e-9ebb-b4bc9ac12131"
+        ClientSideComponentProperties="{}">
+    </CustomAction>
+    <CustomAction
+        Title="PageTranslator"
+        Location="ClientSideExtension.ApplicationCustomizer"
+        ClientSideComponentId="5a7c31f0-9d84-4c2e-b1a6-3f8e52d90c47"
+        ClientSideComponentProperties="{}">
+    </CustomAction>
+</Elements>

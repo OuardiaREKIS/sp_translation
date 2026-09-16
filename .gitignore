@@ -1,0 +1,19 @@
+# ===== SECRETS - ne JAMAIS committer =====
+# Cle Azure AI Translator en clair
+local.settings.json
+# Certificats avec cle privee
+*.pfx
+# URL de la fonction avec sa cle ?code=
+CustomAction/src/components/constants/Azure.json
+
+# ===== Dependances et sorties de build =====
+node_modules/
+CustomAction/lib/
+CustomAction/temp/
+CustomAction/dist/
+CustomAction/release/
+CustomAction/sharepoint/solution/
+*.log
+
+# ===== Donnees d'incident / temporaires =====
+canvas-backup/

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx/command-set-extension-manifest.schema.json",
+
+  "id": "ec203189-1da1-424e-9ebb-b4bc9ac12131",
+  "alias": "TranslatorCommandSet",
+  "componentType": "Extension",
+  "extensionType": "ListViewCommandSet",
+
+  // The "*" signifies that the version should be taken from the package.json
+  "version": "*",
+  "manifestVersion": 2,
+
+  // If true, the component can only be installed on sites where Custom Script is allowed.
+  // Components that allow authors to embed arbitrary script code should set this to true.
+  // https://support.office.com/en-us/article/Turn-scripting-capabilities-on-or-off-1f2c515f-5d7e-448a-9fd7-835da935584f
+  "requiresCustomScript": false,
+  "items": {
+    "TRANSLATOR_COMMAND": {
+      "title": { "default": "Translation", "en-US": "Translation", "fr-FR": "Traduction" },
+      "iconImageUrl": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDQ4IDIwNDgiIGNsYXNzPSJzdmdfZGQ3OTBlZTMiIGZvY3VzYWJsZT0iZmFsc2UiPjxwYXRoIGQ9Ik0xMDI0IDBxMTQxIDAgMjcyIDM2dDI0NSAxMDMgMjA3IDE2MCAxNjAgMjA4IDEwMyAyNDUgMzcgMjcycTAgMTQxLTM2IDI3MnQtMTAzIDI0NS0xNjAgMjA3LTIwOCAxNjAtMjQ1IDEwMy0yNzIgMzdxLTE0MSAwLTI3Mi0zNnQtMjQ1LTEwMy0yMDctMTYwLTE2MC0yMDgtMTAzLTI0NC0zNy0yNzNxMC0xNDEgMzYtMjcydDEwMy0yNDUgMTYwLTIwNyAyMDgtMTYwVDc1MSAzN3QyNzMtMzd6bTgwOSA2NDBxLTM4LTgxLTkyLTE1MnQtMTIwLTEzMS0xNDMtMTA1LTE2MS03NXEzNiA1MCA2NSAxMDZ0NTEgMTE1IDM5IDEyMSAyOCAxMjFoMzMzem04NyAzODRxMC0xMzMtMzctMjU2aC0zNjNxOCA2NCAxMiAxMjd0NCAxMjlxMCA2NS00IDEyOHQtMTIgMTI4aDM2M3EzNy0xMjMgMzctMjU2em0tODk2IDg5NnE0OSAwIDkxLTI3dDc5LTcxIDY0LTk5IDUxLTExMyAzNy0xMTAgMjMtOTJINjc5cTggMzkgMjMgOTJ0MzcgMTEwIDUwIDExMiA2NSAxMDAgNzggNzEgOTIgMjd6bTM2Ny02NDBxOC02NCAxMi0xMjd0NS0xMjlxMC02NS00LTEyOHQtMTMtMTI4SDY1N3EtOCA2NC0xMiAxMjd0LTUgMTI5cTAgNjUgNCAxMjh0MTMgMTI4aDczNHpNMTI4IDEwMjRxMCAxMzMgMzcgMjU2aDM2M3EtOC02NC0xMi0xMjd0LTQtMTI5cTAtNjUgNC0xMjh0MTItMTI4SDE2NXEtMzcgMTIzLTM3IDI1NnptODk2LTg5NnEtNDkgMC05MSAyN3QtNzkgNzEtNjQgOTktNTEgMTEzLTM3IDExMC0yMyA5Mmg2OTBxLTgtMzktMjMtOTJ0LTM3LTExMC01MC0xMTItNjUtMTAwLTc4LTcxLTkyLTI3em0tMjkzIDQ5cS04NCAyOS0xNjEgNzVUNDI3IDM1NyAzMDcgNDg3dC05MiAxNTNoMzMzcTEyLTYwIDI4LTEyMXQzOC0xMjAgNTItMTE2IDY1LTEwNnpNMjE1IDE0MDhxMzggODEgOTIgMTUydDEyMCAxMzEgMTQzIDEwNSAxNjEgNzVxLTM2LTUwLTY1LTEwNnQtNTEtMTE1LTM5LTEyMS0yOC0xMjFIMjE1em0xMTAyIDQ2M3E4NC0yOSAxNjEtNzV0MTQzLTEwNSAxMjAtMTMwIDkyLTE1M2gtMzMzcS0xMiA2MC0yOCAxMjF0LTM4IDEyMC01MiAxMTYtNjUgMTA2eiI+PC9wYXRoPjwvc3ZnPg==",
+      "type": "command"
+    }
+  }
+}

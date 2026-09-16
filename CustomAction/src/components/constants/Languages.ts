@@ -1,0 +1,311 @@
+import strings from 'TranslatorCommandSetStrings';
+
+export interface ILanguageLabel {
+  id: number;
+  spValue: string;
+  azValue: string;
+  title: string;
+}
+
+export const LanguagesList: ILanguageLabel[] = [
+  {
+    id: 1025,
+    spValue: "ar",
+    azValue: "ar",
+    title: strings.Arabic,
+  },
+  {
+    id: 1068,
+    spValue: "az-latn",
+    azValue: "az",
+    title: strings.Azerbaijani,
+  },
+  {
+    id: 1069,
+    spValue: "eu",
+    azValue: "eu",
+    title: strings.Basque,
+  },
+  {
+    id: 5146,
+    spValue: "bs-latn",
+    azValue: "bs",
+    title: strings.Bosnian,
+  },
+  {
+    id: 1026,
+    spValue: "bg",
+    azValue: "bg",
+    title: strings.Bulgarian,
+  },
+  {
+    id: 1027,
+    spValue: "ca",
+    azValue: "ca",
+    title: strings.Catalan,
+  },
+  {
+    id: 2052,
+    spValue: "zh-chs",
+    azValue: "zh-Hans",
+    title: strings.ChineseSimplified,
+  },
+  {
+    id: 1028,
+    spValue: "zh-cht",
+    azValue: "zh-Hant",
+    title: strings.ChineseTraditional,
+  },
+  {
+    id: 1050,
+    spValue: "hr",
+    azValue: "hr",
+    title: strings.Croatian,
+  },
+  {
+    id: 1030,
+    spValue: "da",
+    azValue: "da",
+    title: strings.Danish,
+  },
+  {
+    id: 1164,
+    spValue: "prs",
+    azValue: "prs",
+    title: strings.Dari,
+  },
+  {
+    id: 1043,
+    spValue: "nl",
+    azValue: "nl",
+    title: strings.Dutch,
+  },
+  {
+    id: 1061,
+    spValue: "et",
+    azValue: "et",
+    title: strings.Estonian,
+  },
+  {
+    id: 1035,
+    spValue: "fi",
+    azValue: "fi",
+    title: strings.Finnish,
+  },
+  {
+    id: 1110,
+    spValue: "gl",
+    azValue: "gl",
+    title: strings.Galician,
+  },
+  {
+    id: 1081,
+    spValue: "hi",
+    azValue: "hi",
+    title: strings.Hindi,
+  },
+  {
+    id: 2108,
+    spValue: "ga",
+    azValue: "ga",
+    title: strings.Irish,
+  },
+  {
+    id: 1029,
+    spValue: "cs",
+    azValue: "cs",
+    title: strings.Czech,
+  },
+  {
+    id: 1033,
+    spValue: "en",
+    azValue: "en",
+    title: strings.English,
+  },
+  {
+    id: 1036,
+    spValue: "fr",
+    azValue: "fr",
+    title: strings.French,
+  },
+  {
+    id: 1031,
+    spValue: "de",
+    azValue: "de",
+    title: strings.German,
+  },
+  {
+    id: 1032,
+    spValue: "el",
+    azValue: "el",
+    title: strings.Greek,
+  },
+  {
+    id: 1037,
+    spValue: "he",
+    azValue: "he",
+    title: strings.Hebrew,
+  },
+  {
+    id: 1038,
+    spValue: "hu",
+    azValue: "hu",
+    title: strings.Hungarian,
+  },
+  {
+    id: 1057,
+    spValue: "id",
+    azValue: "id",
+    title: strings.Indonesian,
+  },
+  {
+    id: 1040,
+    spValue: "it",
+    azValue: "it",
+    title: strings.Italiano,
+  },
+  {
+    id: 1041,
+    spValue: "ja",
+    azValue: "ja",
+    title: strings.Japanese,
+  },
+  {
+    id: 1087,
+    spValue: "kk",
+    azValue: "kk",
+    title: strings.Kazakh,
+  },
+  {
+    id: 1042,
+    spValue: "ko",
+    azValue: "ko",
+    title: strings.Korean,
+  },
+  {
+    id: 1062,
+    spValue: "lv",
+    azValue: "lv",
+    title: strings.Latvian,
+  },
+  {
+    id: 1063,
+    spValue: "lt",
+    azValue: "lt",
+    title: strings.Lithanian,
+  },
+  {
+    id: 1071,
+    spValue: "mk",
+    azValue: "mk",
+    title: strings.Macedonian,
+  },
+  {
+    id: 1086,
+    spValue: "ms",
+    azValue: "ms",
+    title: strings.Malay,
+  },
+  {
+    id: 1044,
+    spValue: "nb",
+    azValue: "nb",
+    title: strings.Norwegian,
+  },
+  {
+    id: 1045,
+    spValue: "pl",
+    azValue: "pl",
+    title: strings.Polish,
+  },
+  {
+    id: 1046,
+    spValue: "pt-br",
+    azValue: "pt",
+    title: strings.PortugueseBr,
+  },
+  {
+    id: 2070,
+    spValue: "pt-pt",
+    azValue: "pt-pt",
+    title: strings.PortuguesePt,
+  },
+  {
+    id: 1048,
+    spValue: "ro",
+    azValue: "ro",
+    title: strings.Romanian,
+  },
+  {
+    id: 1049,
+    spValue: "ru",
+    azValue: "ru",
+    title: strings.Russian,
+  },
+  {
+    id: 10266,
+    spValue: "sr-cyrl",
+    azValue: "sr-Cyrl",
+    title: strings.SerbianCyrillic,
+  },
+  {
+    id: 9242,
+    spValue: "sr-latn",
+    azValue: "sr-Latn",
+    title: strings.SerbianLatin,
+  },
+  {
+    id: 1051,
+    spValue: "sk",
+    azValue: "sk",
+    title: strings.Slovak,
+  },
+  {
+    id: 1060,
+    spValue: "sl",
+    azValue: "sl",
+    title: strings.Slovenian,
+  },
+  {
+    id: 3082,
+    spValue: "es",
+    azValue: "es",
+    title: strings.Spanish,
+  },
+  {
+    id: 1053,
+    spValue: "sv",
+    azValue: "sv",
+    title: strings.Swedish,
+  },
+  {
+    id: 1054,
+    spValue: "th",
+    azValue: "th",
+    title: strings.Thai,
+  },
+  {
+    id: 1055,
+    spValue: "tr",
+    azValue: "tr",
+    title: strings.Turkish,
+  },
+  {
+    id: 1058,
+    spValue: "uk",
+    azValue: "uk",
+    title: strings.Ukrainian,
+  },
+  {
+    id: 1066,
+    spValue: "vi",
+    azValue: "vi",
+    title: strings.Vietnamese,
+  },
+  {
+    id: 1106,
+    spValue: "cy",
+    azValue: "cy",
+    title: strings.Welsh,
+  },
+];

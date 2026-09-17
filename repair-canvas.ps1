@@ -46,7 +46,7 @@ foreach ($it in $items) {
     $name = $it["FileRef"] -replace ".*/SitePages/", ""
     $raw = [string]$it["CanvasContent1"]
     if (-not $raw) { continue }
-    $hits = $repairs | Where-Object { $raw.Contains($_.find) }
+    $hits = @($repairs | Where-Object { $raw.Contains($_.find) })
     if (-not $hits) { continue }
     $nb++
 

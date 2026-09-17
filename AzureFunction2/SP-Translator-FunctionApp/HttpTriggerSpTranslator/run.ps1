@@ -402,20 +402,31 @@ foreach ($pagePath in $pages) {
         catch {
             Write-Warning "MosaicLanguage non renseigne sur $currentPage : $_"
         }
-        # Canari qualite : verifier que l'editeur (co-edition) accepte la copie
-        # finale, AVANT toute publication. Toute future incompatibilite de
-        # serialisation est detectee ici et la page reste en brouillon.
+        # Validation du canvas AVANT publication, en local (sans startCoAuth :
+        # cet appel ouvrait une session de co-edition qui verrouillait la page
+        # ~1h et bloquait sa suppression). Chaque bloc controldata/webpartdata
+        # doit etre un JSON valide et sans identifiant null (signatures du bug
+        # fond de section que la co-edition SharePoint refuse).
         $editorOk = $true
         $checkItem = $null
         try {
             $checkItem = Get-PnPFile -Url "$(([uri]$siteUrl).AbsolutePath.TrimEnd('/'))/SitePages/$currentPage" -AsListItem -ErrorAction Stop
-            $null = Invoke-PnPSPRestMethod -Method Post -Url "/_api/sitepages/pages($($checkItem.Id))/startCoAuth" -ErrorAction Stop
-            Write-Host "Validation editeur OK : $currentPage"
+            $rawCanvas = [string]$checkItem["CanvasContent1"]
+            if ($rawCanvas) {
+                foreach ($m in [regex]::Matches($rawCanvas, 'data-sp-(?:controldata|webpartdata)="([^"]*)"')) {
+                    $ctrlJson = [System.Net.WebUtility]::HtmlDecode($m.Groups[1].Value)
+                    $null = [System.Text.Json.JsonDocument]::Parse($ctrlJson)
+                    if ($ctrlJson -match '"webPartId"\s*:\s*null' -or $ctrlJson -match '^\s*\{\s*"id"\s*:\s*null') {
+                        throw "identifiant null dans le canvas (controle fond de section)"
+                    }
+                }
+            }
+            Write-Host "Validation canvas OK : $currentPage"
         }
         catch {
             $editorOk = $false
             $failedValidations += $currentPage
-            Write-Warning "VALIDATION EDITEUR KO sur $currentPage : $_"
+            Write-Warning "VALIDATION CANVAS KO sur $currentPage : $_"
         }
         # Statut final : Completed si la validation editeur est passee, Failed
         # sinon (une copie Failed est reprise automatiquement au prochain passage).

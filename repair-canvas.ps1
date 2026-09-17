@@ -61,11 +61,13 @@ foreach ($it in $items) {
     foreach ($r in $repairs) { $fixed = $fixed.Replace($r.find, $r.repl) }
     Set-PnPListItem -List $list -Identity $it.Id -Values @{ CanvasContent1 = $fixed } -UpdateType SystemUpdate | Out-Null
 
-    try {
-        $null = Invoke-PnPSPRestMethod -Method Post -Url "/_api/sitepages/pages($($it.Id))/startCoAuth" -ErrorAction Stop
-        Write-Host "[REPARE OK] id=$($it.Id)  $name" -ForegroundColor Green
-    }
-    catch { Write-Host "[TOUJOURS KO] id=$($it.Id)  $name -> $($_.Exception.Message)" -ForegroundColor Red }
+    # Verification SANS startCoAuth (cet appel ouvrait une session de
+    # co-edition qui verrouillait la page ~1h et bloquait sa suppression) :
+    # on relit l'element et on confirme qu'aucun token invalide ne reste.
+    $check = [string](Get-PnPListItem -List $list -Id $it.Id -Fields "CanvasContent1")["CanvasContent1"]
+    $reste = $repairs | Where-Object { $check.Contains($_.find) }
+    if (-not $reste) { Write-Host "[REPARE OK] id=$($it.Id)  $name" -ForegroundColor Green }
+    else { Write-Host "[TOUJOURS KO] id=$($it.Id)  $name (token invalide restant)" -ForegroundColor Red }
 }
 
 if ($nb -eq 0) { Write-Host "Aucune page a reparer." -ForegroundColor Green }

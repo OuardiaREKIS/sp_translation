@@ -9,7 +9,7 @@ $attendus = [ordered]@{
     1055 = "tr-tr"; 1025 = "ar-sa"; 1049 = "ru-ru"; 2052 = "zh-cn"; 1028 = "zh-tw"
     1041 = "ja-jp"; 1046 = "pt-br"; 2070 = "pt-pt"; 1045 = "pl-pl"; 1043 = "nl-nl"
 }
-$pageLanguageIds = @($attendus.Keys)
+$createLanguageIds = @($attendus.Keys)
 Invoke-Expression $line.Trim()
 $obtenus = $codesSP -split "," | ForEach-Object { $_.Trim('"') }
 $fails = 0

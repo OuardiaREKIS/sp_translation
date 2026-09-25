@@ -4,7 +4,7 @@ param($Request, $TriggerMetadata)
 
 Write-Host "PowerShell HTTP trigger function processed a request."
 # Marqueur de build : visible dans la reponse 400 (verification de la version deployee)
-$buildVersion = "build-2026-09-25-17h"
+$buildVersion = "build-2026-09-25-18h"
 Write-Host $buildVersion
 
 $languages = $Request.Body.languages
@@ -216,18 +216,18 @@ foreach ($pagePath in $pages) {
         # source peuvent entrer en collision transitoire cote SharePoint
         # (SPException) ; le perdant attend et repasse.
         $created = $false
-        for ($essai = 1; $essai -le 3 -and -not $created; $essai++) {
+        for ($essai = 1; $essai -le 5 -and -not $created; $essai++) {
             try {
                 Invoke-PnPSPRestMethod -Method Post -Url "/_api/sitepages/pages($($originalPage.PageId))/translations/create" -Content $translateBody -ContentType "application/json;odata=verbose" -ErrorAction Stop | Out-Null
                 $created = $true
             }
             catch {
-                if ($essai -lt 3) {
+                if ($essai -lt 5) {
                     Write-Warning "translations/create essai $essai rate, nouvelle tentative dans $($essai * 5) s : $_"
                     Start-Sleep -Seconds ($essai * 5)
                 }
                 else {
-                    Send-Response -code InternalServerError -body $(@{ msg = "Creation des copies impossible pour '$pagePath' apres 3 essais (langues activees sur le site ?) : $_" } | ConvertTo-Json)
+                    Send-Response -code InternalServerError -body $(@{ msg = "Creation des copies impossible pour '$pagePath' apres 5 essais (langues activees sur le site ?) : $_" } | ConvertTo-Json)
                 }
             }
         }

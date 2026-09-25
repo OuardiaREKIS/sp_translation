@@ -450,21 +450,26 @@ foreach ($pagePath in $pages) {
             $modernPage.Publish()
         }
         Write-Host "Page $currentPage is translated"
+        # Le plan Consumption coupe la reponse HTTP vers ~230 s : bien avant,
+        # on repond 202 avec la page COURANTE incluse. A la reprise (le
+        # dialogue SPFx boucle sur les 202), les langues deja Completed sont
+        # sautees et les Pending reprises : la machine a etats rend cette
+        # reprise grossiere exacte. Sans ce point de controle, une longue
+        # traduction reussissait en arriere-plan mais le navigateur recevait
+        # une reponse morte -> faux message d'echec.
+        if ($stopwatch.Elapsed.TotalSeconds -gt 180) {
+            $body = $(@{
+                    siteUrl   = $siteUrl
+                    pages     = @($pages[($pages.IndexOf($pagePath))..($pages.Length - 1)])
+                    languages = $languages
+                } | ConvertTo-Json).ToString()
+            Disconnect-PnPOnline
+            Send-Response -code Accepted -body $(@{ msg = $body } | ConvertTo-Json)
+        }
     }
     Write-Host "After translate a page : $($stopwatch.Elapsed.TotalSeconds)"
 
-    # Limite d'execution (~10 min max) : apres 500 s, on renvoie 202 avec les pages
-    # restantes ; le dialogue SPFx rappelle la function avec ce reliquat.
-    $remainingPages = $pages.Length - 1 - $pages.IndexOf($pagePath)
-    if ($stopwatch.Elapsed.TotalSeconds -gt 500 -and $remainingPages -gt 0) {
-        $body = $(@{
-                siteUrl   = $siteUrl
-                pages     = $pages[($pages.IndexOf($pagePath) + 1)..($pages.Length - 1)]
-                languages = $languages
-            } | ConvertTo-Json).ToString()
-        Disconnect-PnPOnline
-        Send-Response -code Accepted -body $(@{ msg = $body } | ConvertTo-Json)
-    }
+
 }
 
 Disconnect-PnPOnline

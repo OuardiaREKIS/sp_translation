@@ -118,8 +118,24 @@ export default class PageTranslatorApplicationCustomizer extends BaseApplication
   // ni a legacyPageContext : apres une navigation interne (creation de page,
   // retour de la galerie), ils pointent encore sur l'ancienne page tant que
   // l'utilisateur n'a pas actualise -> mauvaise page envoyee a la traduction.
-  private currentPageName(): string | undefined {
+  // Chemin serveur de la page courante : l'URL d'abord (toujours a jour) ;
+  // cas particulier de l'accueil visite par la RACINE du site (URL sans
+  // /SitePages/) : on retombe sur le contexte, fiable car l'arrivee par la
+  // racine est un chargement complet, pas une navigation interne.
+  private currentServerRelativePath(): string {
     const path = decodeURIComponent(window.location.pathname);
+    const webPath = this.context.pageContext.web.serverRelativeUrl.replace(/\/+$/, "");
+    if (path.replace(/\/+$/, "").toLowerCase() === webPath.toLowerCase()) {
+      const legacy = this.context.pageContext.legacyPageContext;
+      if (legacy && legacy.serverRequestPath) {
+        return legacy.serverRequestPath as string;
+      }
+    }
+    return path;
+  }
+
+  private currentPageName(): string | undefined {
+    const path = this.currentServerRelativePath();
     const idx = path.toLowerCase().indexOf("/sitepages/");
     if (idx === -1) {
       return undefined;
@@ -138,7 +154,7 @@ export default class PageTranslatorApplicationCustomizer extends BaseApplication
   private async isTranslationCopy(): Promise<boolean> {
     try {
       const web = this.context.pageContext.web;
-      const serverRel = decodeURIComponent(window.location.pathname).replace(/'/g, "''");
+      const serverRel = this.currentServerRelativePath().replace(/'/g, "''");
       const url = `${web.absoluteUrl}/_api/web/GetFileByServerRelativePath(decodedurl='${serverRel}')/ListItemAllFields?$select=OData__SPIsTranslation`;
       const response = await this.context.spHttpClient.get(url, SPHttpClient.configurations.v1);
       if (!response.ok) {

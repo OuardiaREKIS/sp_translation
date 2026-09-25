@@ -94,3 +94,20 @@ catalogue, verifier le HASH du bundle charge dans le manifeste de page.
 
 References : REGLES-IMPLICITES.md, tests/run-tests.ps1, repair-canvas.ps1,
 check-page-locks.ps1, inspect_homepage.ps1.
+
+## Rituel de deploiement — architecture a file (ajout 25/09)
+
+- [ ] Apres CHAQUE `func publish` qui ajoute/modifie une fonction a
+      declencheur de file : `az functionapp restart` PUIS POST ARM
+      `syncfunctiontriggers` — sans cela le host en place peut consommer
+      les messages SANS executer le nouveau listener.
+- [ ] host.json : `extensions.queues.batchSize=1` et `newBatchThreshold=0`
+      OBLIGATOIRES avec PowerShell+PnP (la concurrence in-process par
+      defaut est ~1000 : plusieurs messages traites en parallele dans le
+      meme processus pietinent la connexion PnP -> morts silencieuses).
+      App setting associe : `PSWorkerInProcConcurrencyUpperBound=1`.
+- [ ] Test de bout en bout : orchestrateur repond < 30 s avec le detail
+      (en file / reprises / ignorees), puis chaque copie passe Pending ->
+      Completed ; verifier aussi l'invocation directe
+      `/admin/functions/TranslateWorker` (master key) comme outil de
+      diagnostic si la file semble muette.

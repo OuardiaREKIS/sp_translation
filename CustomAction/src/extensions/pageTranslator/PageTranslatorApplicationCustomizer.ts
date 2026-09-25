@@ -14,7 +14,6 @@ import TranslatorDialog, {
 import strings from "TranslatorCommandSetStrings";
 
 const LOG_SOURCE: string = "PageTranslatorApplicationCustomizer";
-const SITE_PAGES_TEMPLATE: number = 119;
 
 export interface IPageTranslatorApplicationCustomizerProperties {}
 
@@ -114,31 +113,33 @@ export default class PageTranslatorApplicationCustomizer extends BaseApplication
     return this.placeholder ? this.placeholder.domElement : undefined;
   }
 
-  // Nom de fichier de la page courante relatif a la bibliotheque (ex: "ma-page.aspx"),
-  // ou undefined si on n'est pas sur une page de la bibliotheque des pages.
+  // Nom de la page courante deduit de l'URL (ex: "ma-page.aspx"), ou undefined
+  // hors d'une page de la bibliotheque. On ne se fie PAS a pageContext.listItem
+  // ni a legacyPageContext : apres une navigation interne (creation de page,
+  // retour de la galerie), ils pointent encore sur l'ancienne page tant que
+  // l'utilisateur n'a pas actualise -> mauvaise page envoyee a la traduction.
   private currentPageName(): string | undefined {
-    const list = this.context.pageContext.list;
-    const listItem = this.context.pageContext.listItem;
-    const legacy = this.context.pageContext.legacyPageContext;
-    if (!list || !listItem || !legacy || legacy.listBaseTemplate !== SITE_PAGES_TEMPLATE) {
+    const path = decodeURIComponent(window.location.pathname);
+    const idx = path.toLowerCase().indexOf("/sitepages/");
+    if (idx === -1) {
       return undefined;
     }
-    const path: string = legacy.serverRequestPath || decodeURIComponent(window.location.pathname);
-    const prefix = `${list.serverRelativeUrl}/`;
-    if (path.toLowerCase().indexOf(prefix.toLowerCase()) !== 0) {
+    const rel = path.substring(idx + "/sitepages/".length);
+    const relLower = rel.toLowerCase();
+    if (!relLower.endsWith(".aspx") || relLower.indexOf("forms/") === 0) {
       return undefined;
     }
-    return path.substring(prefix.length);
+    return rel;
   }
 
   // Une copie traduite porte le drapeau _SPIsTranslation : pas de bouton dessus,
-  // on traduit toujours depuis la page source.
+  // on traduit toujours depuis la page source. Interrogation par CHEMIN (URL
+  // courante) et non par pageContext.listItem, perime apres navigation interne.
   private async isTranslationCopy(): Promise<boolean> {
     try {
       const web = this.context.pageContext.web;
-      const list = this.context.pageContext.list;
-      const listItem = this.context.pageContext.listItem;
-      const url = `${web.absoluteUrl}/_api/web/lists(guid'${list.id.toString()}')/items(${listItem.id})`;
+      const serverRel = decodeURIComponent(window.location.pathname).replace(/'/g, "''");
+      const url = `${web.absoluteUrl}/_api/web/GetFileByServerRelativePath(decodedurl='${serverRel}')/ListItemAllFields?$select=OData__SPIsTranslation`;
       const response = await this.context.spHttpClient.get(url, SPHttpClient.configurations.v1);
       if (!response.ok) {
         return false;

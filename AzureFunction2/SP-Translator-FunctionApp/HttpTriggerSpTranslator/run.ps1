@@ -3,6 +3,9 @@ using namespace System.Net
 param($Request, $TriggerMetadata)
 
 Write-Host "PowerShell HTTP trigger function processed a request."
+# Marqueur de build : visible dans la reponse 400 (verification de la version deployee)
+$buildVersion = "build-2026-09-25-16h"
+Write-Host $buildVersion
 
 $languages = $Request.Body.languages
 $pages = $Request.Body.pages
@@ -36,7 +39,7 @@ function Send-Response {
 
 # Interact with query parameters or the body of the request.
 if (-not $languages -or -not $pages -or -not $siteUrl) {
-    Send-Response -code BadRequest -body "Bad Request"
+    Send-Response -code BadRequest -body "Bad Request ($buildVersion)"
 }
 
 $languageIds = @()

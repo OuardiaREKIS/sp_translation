@@ -33,29 +33,50 @@ const TranslatorDialog: React.FC<ITranslatorDialogProps> = ({ context, pages, is
     requestHeaders.append('Content-Type', 'application/json');
     requestHeaders.append('Accept', 'application/json');
 
-    // Appelle HttpTriggerSpTranslator ; tant qu'elle repond 202 (temps d'execution
-    // atteint cote Azure), on la rappelle avec les pages restantes qu'elle renvoie.
-    const startTranslation = async (): Promise<void> => {
-        setCurrentDialog(EDialog.LOADING);
+    // Nombre de langues par appel : les groupes partent EN PARALLELE (une
+    // execution de la fonction par groupe, Azure monte les instances), ce qui
+    // divise le temps total. 2 par groupe = bon compromis vitesse/throttling
+    // SharePoint & Translator.
+    const LANGUAGES_PER_CALL = 2;
+
+    // Un appel HttpTriggerSpTranslator pour un groupe de langues ; tant qu'il
+    // repond 202 (temps d'execution atteint cote Azure), on le rappelle avec
+    // les pages restantes qu'il renvoie.
+    const translateGroup = async (group: { code: string; azCode: string; id: number }[]): Promise<boolean> => {
         const body = JSON.stringify({
             siteUrl: context.pageContext.web.absoluteUrl,
             pages: pages,
-            languages: siteLanguages
-                .filter((language) => selectedKeys.indexOf(language.spKey) !== -1)
-                .map((language) => ({ code: language.spKey, azCode: language.azKey, id: language.lcid })),
+            languages: group,
         });
         let httpClientOptions: IHttpClientOptions = { body: body, headers: requestHeaders };
+        let response = await context.httpClient.post(azureData.properties.funcAppUrl, HttpClient.configurations.v1, httpClientOptions);
+        while (response.status === 202) {
+            const jsonResponse = await response.json();
+            httpClientOptions = { body: jsonResponse.msg, headers: requestHeaders };
+            response = await context.httpClient.post(azureData.properties.funcAppUrl, HttpClient.configurations.v1, httpClientOptions);
+        }
+        if (!response.ok) {
+            console.error(`HttpTriggerSpTranslator [${group.map((l) => l.code).join(",")}] : ${response.status} ${await response.text()}`);
+        }
+        return response.ok;
+    };
+
+    const startTranslation = async (): Promise<void> => {
+        setCurrentDialog(EDialog.LOADING);
+        const selectedLanguages = siteLanguages
+            .filter((language) => selectedKeys.indexOf(language.spKey) !== -1)
+            .map((language) => ({ code: language.spKey, azCode: language.azKey, id: language.lcid }));
+        const groups: { code: string; azCode: string; id: number }[][] = [];
+        for (let i = 0; i < selectedLanguages.length; i += LANGUAGES_PER_CALL) {
+            groups.push(selectedLanguages.slice(i, i + LANGUAGES_PER_CALL));
+        }
         try {
-            let response = await context.httpClient.post(azureData.properties.funcAppUrl, HttpClient.configurations.v1, httpClientOptions);
-            while (response.status === 202) {
-                const jsonResponse = await response.json();
-                httpClientOptions = { body: jsonResponse.msg, headers: requestHeaders };
-                response = await context.httpClient.post(azureData.properties.funcAppUrl, HttpClient.configurations.v1, httpClientOptions);
-            }
-            if (response.ok) {
+            const results = await Promise.all(groups.map((group) => translateGroup(group)));
+            if (results.every((ok) => ok)) {
                 setCurrentDialog(EDialog.SUCCESS);
             } else {
-                console.error(`HttpTriggerSpTranslator : ${response.status} ${await response.text()}`);
+                // Un groupe en echec : les langues reussies sont en place, les
+                // autres sont reprenables (statut Pending/Failed) au prochain clic.
                 setCurrentDialog(EDialog.ERROR);
             }
         }

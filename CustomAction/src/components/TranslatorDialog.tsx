@@ -33,11 +33,14 @@ const TranslatorDialog: React.FC<ITranslatorDialogProps> = ({ context, pages, is
     requestHeaders.append('Content-Type', 'application/json');
     requestHeaders.append('Accept', 'application/json');
 
-    // Nombre de langues par appel : les groupes partent EN PARALLELE (une
-    // execution de la fonction par groupe, Azure monte les instances), ce qui
-    // divise le temps total. 1 par groupe = parallelisme maximal, departs decales de 1,5 s contre le throttling
-    // SharePoint & Translator.
-    const LANGUAGES_PER_CALL = 1;
+    // Nombre de langues par appel. RETOUR AU SEQUENTIEL (un seul appel pour
+    // toutes les langues) : le worker PowerShell du plan Consumption traite
+    // UNE invocation a la fois par instance ; une rafale d'appels paralleles
+    // provoque files d'attente, timeouts et executions mortes a mi-course
+    // (constate le 25/09 : statuts Pending et titres de bapteme residuels).
+    // En serie et a chaud, ~10 langues tiennent dans la minute. Pour
+    // re-paralleliser un jour (plan Premium/Always-on), baisser cette valeur.
+    const LANGUAGES_PER_CALL = 50;
 
     // Un appel HttpTriggerSpTranslator pour un groupe de langues ; tant qu'il
     // repond 202 (temps d'execution atteint cote Azure), on le rappelle avec

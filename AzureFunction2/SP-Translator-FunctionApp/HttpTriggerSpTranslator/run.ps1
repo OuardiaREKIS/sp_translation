@@ -212,11 +212,24 @@ foreach ($pagePath in $pages) {
         # On les derive du LCID recu, pour ne pas maintenir de table.
         $codesSP = ($createLanguageIds | ForEach-Object { '"' + ([System.Globalization.CultureInfo]::new([int]$_)).Name.ToLower() + '"' }) -join ","
         $translateBody = '{ "request": { "__metadata": { "type": "SP.TranslationStatusCreationRequest" }, "LanguageCodes": { "results": [ ' + $codesSP + ' ] } } }'
-        try {
-            Invoke-PnPSPRestMethod -Method Post -Url "/_api/sitepages/pages($($originalPage.PageId))/translations/create" -Content $translateBody -ContentType "application/json;odata=verbose" -ErrorAction Stop | Out-Null
-        }
-        catch {
-            Send-Response -code InternalServerError -body $(@{ msg = "Creation des copies impossible pour '$pagePath' (langues activees sur le site ?) : $_" } | ConvertTo-Json)
+        # Creation avec RETENTATIVES : deux appels paralleles sur la meme
+        # source peuvent entrer en collision transitoire cote SharePoint
+        # (SPException) ; le perdant attend et repasse.
+        $created = $false
+        for ($essai = 1; $essai -le 3 -and -not $created; $essai++) {
+            try {
+                Invoke-PnPSPRestMethod -Method Post -Url "/_api/sitepages/pages($($originalPage.PageId))/translations/create" -Content $translateBody -ContentType "application/json;odata=verbose" -ErrorAction Stop | Out-Null
+                $created = $true
+            }
+            catch {
+                if ($essai -lt 3) {
+                    Write-Warning "translations/create essai $essai rate, nouvelle tentative dans $($essai * 5) s : $_"
+                    Start-Sleep -Seconds ($essai * 5)
+                }
+                else {
+                    Send-Response -code InternalServerError -body $(@{ msg = "Creation des copies impossible pour '$pagePath' apres 3 essais (langues activees sur le site ?) : $_" } | ConvertTo-Json)
+                }
+            }
         }
         # Nettoyage defensif de la source (repare l'heritage d'anciennes executions)
         Repair-PageCanvas -PageRelativePath $pagePath

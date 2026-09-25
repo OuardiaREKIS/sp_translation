@@ -11,6 +11,7 @@ define([], function() {
         "Reload": "Reload",
         "Close": "Close",
         "SearchLanguage": "Search a language",
+        "SelectAll": "Select all",
         "EmptySearchLanguage": "No language available on this site for your research",
         "PageTranslationInProgress": " page translation is in progress.",
         "PagesTranslationInProgress": " pages translation are in progress.",

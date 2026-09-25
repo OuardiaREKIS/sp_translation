@@ -32,15 +32,17 @@ const CheckboxGroup: React.FC<ICheckboxGroupProps> = (props) => {
         <Stack styles={{ root: { display: 'flex' } }}>
             {props.siteLanguages &&
                 <div style={{ flex: 1 }}>
-                    {props.siteLanguages.length > 10 &&
-                        <Stack styles={{ root: { flexDirection: 'row', alignItems: 'center' } }}>
+                    {/* "Selectionner tout" toujours visible ; la recherche
+                        seulement quand la liste devient longue. */}
+                    <Stack styles={{ root: { flexDirection: 'row', alignItems: 'center' } }}>
+                        {props.siteLanguages.length > 10 &&
                             <SearchBox placeholder={strings.SearchLanguage} underlined={true} onChange={(event, newValue) => setSearchQuery(newValue)} value={searchQuery} styles={{ root: { height: 50, width: '75%', marginRight: '20px' } }} />
-                            <Checkbox label='All' checked={isAllChecked} onChange={(event, checked) => {
-                                props.setSelectedKeys(checked ? props.siteLanguages.map((value) => value.spKey) : [])
-                                setIsAllChecked(checked)
-                            }} />
-                        </Stack>
-                    }
+                        }
+                        <Checkbox label={strings.SelectAll} checked={isAllChecked} styles={{ root: { padding: 10 } }} onChange={(event, checked) => {
+                            props.setSelectedKeys(checked ? props.siteLanguages.map((value) => value.spKey) : [])
+                            setIsAllChecked(checked)
+                        }} />
+                    </Stack>
                     <ConditionalScrollable nbItems={props.siteLanguages.length}>
                         <Stack style={{ flexDirection: 'row', flexWrap: 'wrap' }} >
                             {props.siteLanguages && props.siteLanguages.filter(language => language.label.toLowerCase().includes(searchQuery.toLowerCase())).map((language) =>

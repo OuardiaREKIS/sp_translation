@@ -10,6 +10,7 @@ declare interface ITranslatorCommandSetStrings {
   Reload: string;
   Close: string;
   SearchLanguage: string;
+  SelectAll: string;
   EmptySearchLanguage: string;
   PageTranslationInProgress: string;
   PagesTranslationInProgress: string;

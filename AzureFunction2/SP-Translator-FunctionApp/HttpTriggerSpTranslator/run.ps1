@@ -125,6 +125,7 @@ function Repair-PageCanvas {
 foreach ($pagePath in $pages) { 
     [System.Collections.ArrayList]$pageLanguageIds = $languageIds
     [System.Collections.ArrayList]$pageLanguageCodes = $languageCodes
+    $createLanguageIds = [System.Collections.ArrayList]@()
     Write-Host "Source page : $pagePath"
     # Check if comments were enabled on the original page
     $originalPage = Get-PnPPage -Identity $pagePath
@@ -136,6 +137,12 @@ foreach ($pagePath in $pages) {
         $pageCheck = $null
         try { $pageCheck = Get-PnPPage -Identity "$($languageCodes[$i].sp)/$pagePath" -ErrorAction Stop } catch { $pageCheck = $null }
         if (-not($pageCheck)) {
+            # Copie inexistante : langue a CREER. Les langues en REPRISE
+            # (Pending/Failed/titre de bapteme) ont deja leur copie et ne
+            # doivent JAMAIS figurer dans translations/create : l'API refuse
+            # une traduction existante (InvalidOperationException) et ferait
+            # echouer tout l'appel, langues neuves comprises.
+            [void]$createLanguageIds.Add($languageIds[$i])
             continue
         }
         # --- Etat de traitement explicite (colonne MosaicTranslationStatus) ---
@@ -183,7 +190,7 @@ foreach ($pagePath in $pages) {
         $pageLanguageIds.Remove($($languageIds[$i]))
         $pageLanguageCodes.Remove($($languageCodes[$i]))
     }
-    if ($pageLanguageIds.Count -gt 0) {
+    if ($createLanguageIds.Count -gt 0) {
         # Creation des copies via l'API REST translations de SharePoint (comme
         # en V1) : contrairement a Set-PnPPage -Translate, cet appel ne re-sauve
         # PAS la page source -> la serialisation PnP ne peut plus corrompre son
@@ -191,7 +198,7 @@ foreach ($pagePath in $pages) {
         # translations/create attend des codes culture complets ("fr-fr",
         # "de-de", "zh-cn"...), PAS les noms courts des dossiers ("fr", "de").
         # On les derive du LCID recu, pour ne pas maintenir de table.
-        $codesSP = ($pageLanguageIds | ForEach-Object { '"' + ([System.Globalization.CultureInfo]::new([int]$_)).Name.ToLower() + '"' }) -join ","
+        $codesSP = ($createLanguageIds | ForEach-Object { '"' + ([System.Globalization.CultureInfo]::new([int]$_)).Name.ToLower() + '"' }) -join ","
         $translateBody = '{ "request": { "__metadata": { "type": "SP.TranslationStatusCreationRequest" }, "LanguageCodes": { "results": [ ' + $codesSP + ' ] } } }'
         try {
             Invoke-PnPSPRestMethod -Method Post -Url "/_api/sitepages/pages($($originalPage.PageId))/translations/create" -Content $translateBody -ContentType "application/json;odata=verbose" -ErrorAction Stop | Out-Null

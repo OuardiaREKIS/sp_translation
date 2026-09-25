@@ -4,7 +4,7 @@ param($Request, $TriggerMetadata)
 
 Write-Host "PowerShell HTTP trigger function processed a request."
 # Marqueur de build : visible dans la reponse 400 (verification de la version deployee)
-$buildVersion = "build-2026-09-25-16h"
+$buildVersion = "build-2026-09-25-17h"
 Write-Host $buildVersion
 
 $languages = $Request.Body.languages
@@ -131,6 +131,15 @@ foreach ($pagePath in $pages) {
     $createLanguageIds = [System.Collections.ArrayList]@()
     Write-Host "Source page : $pagePath"
     # Check if comments were enabled on the original page
+    # La source doit exister A LA RACINE de la bibliotheque : sinon Get-PnPPage
+    # rabat silencieusement sur une copie du meme nom (cas d'une source
+    # supprimee) et tout part en vrille -> refus net et explicite.
+    try {
+        $null = Get-PnPFile -Url "$(([uri]$siteUrl).AbsolutePath.TrimEnd('/'))/SitePages/$pagePath" -ErrorAction Stop
+    }
+    catch {
+        Send-Response -code NotFound -body $(@{ msg = "Page source introuvable a la racine : $pagePath (supprimee ou deplacee ?)" } | ConvertTo-Json)
+    }
     $originalPage = Get-PnPPage -Identity $pagePath
     [bool]$commentsDisabled = $originalPage.AreCommentsDisabled()
 

@@ -35,9 +35,9 @@ const TranslatorDialog: React.FC<ITranslatorDialogProps> = ({ context, pages, is
 
     // Nombre de langues par appel : les groupes partent EN PARALLELE (une
     // execution de la fonction par groupe, Azure monte les instances), ce qui
-    // divise le temps total. 2 par groupe = bon compromis vitesse/throttling
+    // divise le temps total. 1 par groupe = parallelisme maximal, departs decales de 1,5 s contre le throttling
     // SharePoint & Translator.
-    const LANGUAGES_PER_CALL = 2;
+    const LANGUAGES_PER_CALL = 1;
 
     // Un appel HttpTriggerSpTranslator pour un groupe de langues ; tant qu'il
     // repond 202 (temps d'execution atteint cote Azure), on le rappelle avec

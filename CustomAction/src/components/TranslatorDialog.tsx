@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Dialog, DialogFooter, DialogType } from '@fluentui/react/lib/Dialog';
 import { DefaultButton, PrimaryButton } from '@fluentui/react/lib/Button';
 import { BaseComponentContext } from '@microsoft/sp-component-base';
-import { HttpClient, IHttpClientOptions } from '@microsoft/sp-http';
+import { HttpClient, IHttpClientOptions, SPHttpClient } from '@microsoft/sp-http';
 import StepDialog from './common/StepDialog';
 import { SiteLanguagesService } from './GetSupportedLanguages';
 import { Language } from './models/Language';
@@ -33,33 +33,23 @@ const TranslatorDialog: React.FC<ITranslatorDialogProps> = ({ context, pages, is
     requestHeaders.append('Content-Type', 'application/json');
     requestHeaders.append('Accept', 'application/json');
 
-    // Nombre MAXIMUM d'appels paralleles a la fonction. Doit rester <= au
-    // reglage FUNCTIONS_WORKER_PROCESS_COUNT de la Function App (3) : chaque
-    // appel occupe un worker PowerShell ; au-dela, les appels font la queue
-    // et risquent la coupure HTTP. Les langues sont reparties en groupes
-    // equilibres sur ce nombre d'appels, departs decales de 1,5 s.
-    const MAX_PARALLEL_CALLS = 3;
+    // ARCHITECTURE A FILE : l'orchestrateur met les traductions en file et
+    // repond en quelques secondes ; les workers traduisent en parallele.
+    // On suit l'avancement via la colonne MosaicTranslationStatus de chaque
+    // copie (Completed / Failed) en interrogeant SharePoint.
+    const POLL_INTERVAL_MS = 5000;
+    const POLL_TIMEOUT_MS = 15 * 60 * 1000;
 
-    // Un appel HttpTriggerSpTranslator pour un groupe de langues ; tant qu'il
-    // repond 202 (temps d'execution atteint cote Azure), on le rappelle avec
-    // les pages restantes qu'il renvoie.
-    const translateGroup = async (group: { code: string; azCode: string; id: number }[]): Promise<boolean> => {
-        const body = JSON.stringify({
-            siteUrl: context.pageContext.web.absoluteUrl,
-            pages: pages,
-            languages: group,
-        });
-        let httpClientOptions: IHttpClientOptions = { body: body, headers: requestHeaders };
-        let response = await context.httpClient.post(azureData.properties.funcAppUrl, HttpClient.configurations.v1, httpClientOptions);
-        while (response.status === 202) {
-            const jsonResponse = await response.json();
-            httpClientOptions = { body: jsonResponse.msg, headers: requestHeaders };
-            response = await context.httpClient.post(azureData.properties.funcAppUrl, HttpClient.configurations.v1, httpClientOptions);
-        }
-        if (!response.ok) {
-            console.error(`HttpTriggerSpTranslator [${group.map((l) => l.code).join(",")}] : ${response.status} ${await response.text()}`);
-        }
-        return response.ok;
+    const getCopyStatus = async (lang: string, page: string): Promise<string | undefined> => {
+        try {
+            const webRel = context.pageContext.web.serverRelativeUrl.replace(/\/+$/, "");
+            const path = `${webRel}/SitePages/${lang}/${page}`.replace(/'/g, "''");
+            const url = `${context.pageContext.web.absoluteUrl}/_api/web/GetFileByServerRelativePath(decodedurl='${path}')/ListItemAllFields?$select=MosaicTranslationStatus`;
+            const resp = await context.spHttpClient.get(url, SPHttpClient.configurations.v1);
+            if (!resp.ok) { return undefined; }
+            const item = await resp.json();
+            return item.MosaicTranslationStatus as string;
+        } catch { return undefined; }
     };
 
     const startTranslation = async (): Promise<void> => {
@@ -67,29 +57,39 @@ const TranslatorDialog: React.FC<ITranslatorDialogProps> = ({ context, pages, is
         const selectedLanguages = siteLanguages
             .filter((language) => selectedKeys.indexOf(language.spKey) !== -1)
             .map((language) => ({ code: language.spKey, azCode: language.azKey, id: language.lcid }));
-        const groupCount = Math.min(MAX_PARALLEL_CALLS, selectedLanguages.length);
-        const groupSize = Math.ceil(selectedLanguages.length / groupCount);
-        const groups: { code: string; azCode: string; id: number }[][] = [];
-        for (let i = 0; i < selectedLanguages.length; i += groupSize) {
-            groups.push(selectedLanguages.slice(i, i + groupSize));
-        }
+        const body = JSON.stringify({
+            siteUrl: context.pageContext.web.absoluteUrl,
+            pages: pages,
+            languages: selectedLanguages,
+        });
+        const httpClientOptions: IHttpClientOptions = { body: body, headers: requestHeaders };
         try {
-            // Depart decale de 1,5 s entre groupes : la phase sensible (creation
-            // des copies + nettoyage de la page source) ne se produit jamais au
-            // meme instant sur la meme page ; les traductions, elles, se
-            // chevauchent et le gain de parallelisme reste entier.
-            const results = await Promise.all(groups.map((group, index) =>
-                new Promise<boolean>((resolve) => {
-                    window.setTimeout(() => {
-                        translateGroup(group).then(resolve).catch((e) => { console.error(e); resolve(false); });
-                    }, index * 1500);
-                })
-            ));
-            if (results.every((ok) => ok)) {
+            const response = await context.httpClient.post(azureData.properties.funcAppUrl, HttpClient.configurations.v1, httpClientOptions);
+            if (!response.ok) {
+                console.error(`HttpTriggerSpTranslator : ${response.status} ${await response.text()}`);
+                setCurrentDialog(EDialog.ERROR);
+                return;
+            }
+            // Une paire (langue, page) est terminee quand son statut vaut
+            // Completed ou Failed ; les paires deja Completed le sont des le
+            // premier tour (langues sautees par l'orchestrateur).
+            const pending = new Set<string>();
+            pages.forEach((p) => selectedLanguages.forEach((l) => pending.add(`${l.code}/${p}`)));
+            const failed: string[] = [];
+            const deadline = Date.now() + POLL_TIMEOUT_MS;
+            while (pending.size > 0 && Date.now() < deadline) {
+                await new Promise((resolve) => window.setTimeout(resolve, POLL_INTERVAL_MS));
+                for (const key of Array.from(pending)) {
+                    const sep = key.indexOf("/");
+                    const status = await getCopyStatus(key.substring(0, sep), key.substring(sep + 1));
+                    if (status === "Completed") { pending.delete(key); }
+                    else if (status === "Failed") { pending.delete(key); failed.push(key); }
+                }
+            }
+            if (pending.size === 0 && failed.length === 0) {
                 setCurrentDialog(EDialog.SUCCESS);
             } else {
-                // Un groupe en echec : les langues reussies sont en place, les
-                // autres sont reprenables (statut Pending/Failed) au prochain clic.
+                console.error(`Traductions en echec ou en attente : ${[...failed, ...Array.from(pending)].join(", ")}`);
                 setCurrentDialog(EDialog.ERROR);
             }
         }

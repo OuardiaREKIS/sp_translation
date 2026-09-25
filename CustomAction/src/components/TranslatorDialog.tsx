@@ -33,14 +33,12 @@ const TranslatorDialog: React.FC<ITranslatorDialogProps> = ({ context, pages, is
     requestHeaders.append('Content-Type', 'application/json');
     requestHeaders.append('Accept', 'application/json');
 
-    // Nombre de langues par appel. RETOUR AU SEQUENTIEL (un seul appel pour
-    // toutes les langues) : le worker PowerShell du plan Consumption traite
-    // UNE invocation a la fois par instance ; une rafale d'appels paralleles
-    // provoque files d'attente, timeouts et executions mortes a mi-course
-    // (constate le 25/09 : statuts Pending et titres de bapteme residuels).
-    // En serie et a chaud, ~10 langues tiennent dans la minute. Pour
-    // re-paralleliser un jour (plan Premium/Always-on), baisser cette valeur.
-    const LANGUAGES_PER_CALL = 50;
+    // Nombre MAXIMUM d'appels paralleles a la fonction. Doit rester <= au
+    // reglage FUNCTIONS_WORKER_PROCESS_COUNT de la Function App (3) : chaque
+    // appel occupe un worker PowerShell ; au-dela, les appels font la queue
+    // et risquent la coupure HTTP. Les langues sont reparties en groupes
+    // equilibres sur ce nombre d'appels, departs decales de 1,5 s.
+    const MAX_PARALLEL_CALLS = 3;
 
     // Un appel HttpTriggerSpTranslator pour un groupe de langues ; tant qu'il
     // repond 202 (temps d'execution atteint cote Azure), on le rappelle avec
@@ -69,9 +67,11 @@ const TranslatorDialog: React.FC<ITranslatorDialogProps> = ({ context, pages, is
         const selectedLanguages = siteLanguages
             .filter((language) => selectedKeys.indexOf(language.spKey) !== -1)
             .map((language) => ({ code: language.spKey, azCode: language.azKey, id: language.lcid }));
+        const groupCount = Math.min(MAX_PARALLEL_CALLS, selectedLanguages.length);
+        const groupSize = Math.ceil(selectedLanguages.length / groupCount);
         const groups: { code: string; azCode: string; id: number }[][] = [];
-        for (let i = 0; i < selectedLanguages.length; i += LANGUAGES_PER_CALL) {
-            groups.push(selectedLanguages.slice(i, i + LANGUAGES_PER_CALL));
+        for (let i = 0; i < selectedLanguages.length; i += groupSize) {
+            groups.push(selectedLanguages.slice(i, i + groupSize));
         }
         try {
             // Depart decale de 1,5 s entre groupes : la phase sensible (creation

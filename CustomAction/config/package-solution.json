@@ -3,7 +3,7 @@
   "solution": {
     "name": "sp-translator-client-side-solution",
     "id": "8bb3245f-8aaf-4f85-94bd-2379c53f098b",
-    "version": "1.3.4.0",
+    "version": "1.4.0.0",
     "includeClientSideAssets": true,
     "skipFeatureDeployment": true,
     "isDomainIsolated": false,

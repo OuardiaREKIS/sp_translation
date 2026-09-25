@@ -71,7 +71,17 @@ const TranslatorDialog: React.FC<ITranslatorDialogProps> = ({ context, pages, is
             groups.push(selectedLanguages.slice(i, i + LANGUAGES_PER_CALL));
         }
         try {
-            const results = await Promise.all(groups.map((group) => translateGroup(group)));
+            // Depart decale de 1,5 s entre groupes : la phase sensible (creation
+            // des copies + nettoyage de la page source) ne se produit jamais au
+            // meme instant sur la meme page ; les traductions, elles, se
+            // chevauchent et le gain de parallelisme reste entier.
+            const results = await Promise.all(groups.map((group, index) =>
+                new Promise<boolean>((resolve) => {
+                    window.setTimeout(() => {
+                        translateGroup(group).then(resolve).catch((e) => { console.error(e); resolve(false); });
+                    }, index * 1500);
+                })
+            ));
             if (results.every((ok) => ok)) {
                 setCurrentDialog(EDialog.SUCCESS);
             } else {

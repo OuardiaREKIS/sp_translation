@@ -4,7 +4,7 @@ param($Request, $TriggerMetadata)
 
 Write-Host "PowerShell HTTP trigger function processed a request."
 # Marqueur de build : visible dans la reponse 400 (verification de la version deployee)
-$buildVersion = "build-2026-09-25-queue-1"
+$buildVersion = "build-2026-09-27-perf-1"
 Write-Host $buildVersion
 
 # ============================================================================

@@ -1,6 +1,22 @@
 # Module partage entre l'orchestrateur HTTP et le worker de file :
 # traduction complete d'UNE copie de langue, et utilitaires communs.
 
+# Chrono de diagnostic : une ligne par etape, requetable dans App Insights
+# (table traces, filtre "MOSAIC PERF"). $Last porte le cumul precedent pour
+# afficher la duree de l'etape seule.
+function Write-MosaicPerf {
+    param(
+        [Parameter(Mandatory = $true)][string]$Language,
+        [Parameter(Mandatory = $true)][string]$Step,
+        [Parameter(Mandatory = $true)][System.Diagnostics.Stopwatch]$Watch,
+        [Parameter(Mandatory = $true)][ref]$Last
+    )
+    $elapsed = $Watch.Elapsed
+    $delta = $elapsed - $Last.Value
+    $Last.Value = $elapsed
+    Write-Host ("[MOSAIC PERF] {0} {1} {2:N1} s" -f $Language, $Step.PadRight(18), $delta.TotalSeconds)
+}
+
 function Start-Translation {
     param(
         [Parameter(Mandatory = $true)][string]$Text,
@@ -59,6 +75,8 @@ function Invoke-CopyTranslation {
     $sitePath = ([uri]$SiteUrl).AbsolutePath.TrimEnd('/')
     $currentPage = "$LanguageSp/$PagePath"
     Write-Host "Traduction de $currentPage"
+    $perfWatch = [System.Diagnostics.Stopwatch]::StartNew()
+    $perfLast = [TimeSpan]::Zero
 
     # Statut Pending des le debut : si le job s'interrompt, la copie sera
     # reprise (retentative de la file, ou nouveau clic).
@@ -68,8 +86,10 @@ function Invoke-CopyTranslation {
         $statusItem.SystemUpdate()
         Invoke-PnPQuery
     } catch { Write-Warning "Statut Pending non pose sur $currentPage (colonne absente ?)" }
+    Write-MosaicPerf -Language $LanguageSp -Step "StatutPending" -Watch $perfWatch -Last ([ref]$perfLast)
 
     $modernPage = Get-PnPPage -Identity $currentPage
+    Write-MosaicPerf -Language $LanguageSp -Step "LecturePage" -Watch $perfWatch -Last ([ref]$perfLast)
     # Titre traduit depuis la SOURCE (jamais depuis la copie : SharePoint la
     # baptise "Translate to <langue>: <titre>").
     $oldPageTitle = "[$(@{ "Text" = $SourceTitle } | ConvertTo-Json)]"
@@ -79,6 +99,7 @@ function Invoke-CopyTranslation {
         $modernPage.PageHeader.TopicHeader = $(Start-Translation -Text $oldTopicHeader -Language $LanguageAz -Service microsoftTranslator)[0].translations[0].text
     }
     $modernPage.Save()
+    Write-MosaicPerf -Language $LanguageSp -Step "TitreEtEnTete" -Watch $perfWatch -Last ([ref]$perfLast)
 
     $allWebParts = @()
     $allTextsToTranslate = @()
@@ -188,10 +209,13 @@ function Invoke-CopyTranslation {
         }
     }
 
+    Write-MosaicPerf -Language $LanguageSp -Step "AnalyseWebParts" -Watch $perfWatch -Last ([ref]$perfLast)
+
     if ($allTextsToTranslate.Count -gt 0) {
         $jsonTextsToTranslate = $allTextsToTranslate | ConvertTo-Json -AsArray -Compress -Depth 7 -EscapeHandling EscapeHtml
         $allTranslatedTexts = Start-Translation -Text $jsonTextsToTranslate -Language $LanguageAz -Service microsoftTranslator
     }
+    Write-MosaicPerf -Language $LanguageSp -Step "Translator" -Watch $perfWatch -Last ([ref]$perfLast)
     $k = 0
     foreach ($currentWebPart in $allWebParts) {
         for ($i = 1; $i -lt $($currentWebPart.nbTexts + 1); $i++) {
@@ -215,8 +239,11 @@ function Invoke-CopyTranslation {
             Set-PnPPageWebPart -Page $currentPage -Identity $currentWebPart.id -PropertiesJson $currentWebPart.dataProperties
         }
     }
+    Write-MosaicPerf -Language $LanguageSp -Step "EcritureWebParts" -Watch $perfWatch -Last ([ref]$perfLast)
     Set-PnPPage -Identity $currentPage -CommentsEnabled:$(!($CommentsDisabled))
+    Write-MosaicPerf -Language $LanguageSp -Step "Commentaires" -Watch $perfWatch -Last ([ref]$perfLast)
     Repair-PageCanvas -SiteUrl $SiteUrl -PageRelativePath $currentPage
+    Write-MosaicPerf -Language $LanguageSp -Step "ReparationCanvas" -Watch $perfWatch -Last ([ref]$perfLast)
 
     # MosaicLanguage sur la copie (SystemUpdate : pas de version parasite)
     try {
@@ -225,6 +252,7 @@ function Invoke-CopyTranslation {
         $pageItem.SystemUpdate()
         Invoke-PnPQuery
     } catch { Write-Warning "MosaicLanguage non renseigne sur $currentPage : $_" }
+    Write-MosaicPerf -Language $LanguageSp -Step "MetadonneeLangue" -Watch $perfWatch -Last ([ref]$perfLast)
 
     # Validation locale du canvas (JSON valide, aucun identifiant null)
     $editorOk = $true
@@ -254,10 +282,12 @@ function Invoke-CopyTranslation {
             Invoke-PnPQuery
         } catch { Write-Warning "Statut final non pose sur $currentPage" }
     }
+    Write-MosaicPerf -Language $LanguageSp -Step "ValidationStatut" -Watch $perfWatch -Last ([ref]$perfLast)
     # Publication uniquement si demandee ET validation passee (fail-safe)
     if ($env:PUBLISH_AFTER_TRANSLATION -eq "true" -and $editorOk) {
         $modernPage.Publish()
     }
+    Write-Host ("[MOSAIC PERF] {0} {1} {2:N1} s" -f $LanguageSp, "TOTAL".PadRight(18), $perfWatch.Elapsed.TotalSeconds)
     Write-Host "Page $currentPage is translated (ok=$editorOk)"
     return $editorOk
 }

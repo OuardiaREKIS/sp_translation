@@ -13,6 +13,7 @@ $job = if ($QueueItem -is [string]) { $QueueItem | ConvertFrom-Json } else { $Qu
 Write-Host "Job recu : $($job.page) -> $($job.language.code) (tentative $($TriggerMetadata.DequeueCount))"
 
 # Connexion app-only par certificat (memes reglages que l'orchestrateur)
+$connectWatch = [System.Diagnostics.Stopwatch]::StartNew()
 if ($env:SP_CERT_PATH) {
     $certPassword = ConvertTo-SecureString $env:SP_CERT_PASSWORD -AsPlainText -Force
     Connect-PnPOnline -Url $job.siteUrl -ClientId $env:SP_CLIENT_ID -Tenant $env:SP_TENANT -CertificatePath $env:SP_CERT_PATH -CertificatePassword $certPassword -ErrorAction Stop
@@ -20,6 +21,7 @@ if ($env:SP_CERT_PATH) {
 else {
     Connect-PnPOnline -Url $job.siteUrl -ClientId $env:SP_CLIENT_ID -Tenant $env:SP_TENANT -Thumbprint $env:SP_THUMBPRINT -ErrorAction Stop
 }
+Write-Host ("[MOSAIC PERF] {0} {1} {2:N1} s" -f $job.language.code, "Connect-PnP".PadRight(18), $connectWatch.Elapsed.TotalSeconds)
 
 try {
     $ok = Invoke-CopyTranslation -SiteUrl $job.siteUrl -PagePath $job.page `

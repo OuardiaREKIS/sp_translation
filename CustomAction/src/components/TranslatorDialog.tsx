@@ -14,6 +14,7 @@ export enum EDialog {
     SELECTION,
     LOADING,
     SUCCESS,
+    PARTIAL,
     ERROR,
 }
 
@@ -28,6 +29,8 @@ const TranslatorDialog: React.FC<ITranslatorDialogProps> = ({ context, pages, is
     const [currentDialog, setCurrentDialog] = React.useState<EDialog>(EDialog.SELECTION);
     const [siteLanguages, setSiteLanguages] = React.useState<Language[]>();
     const [selectedKeys, setSelectedKeys] = React.useState<string[]>([]);
+    // Detail affiche par le pop-up d'echec partiel ("7/9 reussies - echec sur : ...")
+    const [partialMessage, setPartialMessage] = React.useState<string>("");
 
     const requestHeaders: Headers = new Headers();
     requestHeaders.append('Content-Type', 'application/json');
@@ -86,10 +89,31 @@ const TranslatorDialog: React.FC<ITranslatorDialogProps> = ({ context, pages, is
                     else if (status === "Failed") { pending.delete(key); failed.push(key); }
                 }
             }
-            if (pending.size === 0 && failed.length === 0) {
+            const stillPending = Array.from(pending);
+            if (stillPending.length === 0 && failed.length === 0) {
                 setCurrentDialog(EDialog.SUCCESS);
+                return;
+            }
+            console.error(`Traductions en echec ou en attente : ${[...failed, ...stillPending].join(", ")}`);
+            // Bilan mitige : certaines langues ont reussi, d'autres non.
+            // On affiche le detail a l'ecran ("7/9 reussies - echec sur : Allemand")
+            // plutot que de renvoyer vers la console F12. "Relancer" ne refait
+            // que les echecs : l'orchestrateur ignore les copies Completed.
+            const total = pages.length * selectedLanguages.length;
+            const okCount = total - failed.length - stillPending.length;
+            if (okCount > 0) {
+                const describe = (key: string): string => {
+                    const sep = key.indexOf("/");
+                    const code = key.substring(0, sep);
+                    const label = siteLanguages.filter((l) => l.spKey === code).map((l) => l.label)[0] || code;
+                    return pages.length > 1 ? `${label} (${key.substring(sep + 1)})` : label;
+                };
+                let message = `${okCount}/${total}${strings.PartialTranslationsDone}`;
+                if (failed.length > 0) { message += ` ${strings.FailedOn}${failed.map(describe).join(", ")}.`; }
+                if (stillPending.length > 0) { message += ` ${strings.StillInProgress}${stillPending.map(describe).join(", ")}.`; }
+                setPartialMessage(message);
+                setCurrentDialog(EDialog.PARTIAL);
             } else {
-                console.error(`Traductions en echec ou en attente : ${[...failed, ...Array.from(pending)].join(", ")}`);
                 setCurrentDialog(EDialog.ERROR);
             }
         }
@@ -142,6 +166,9 @@ const TranslatorDialog: React.FC<ITranslatorDialogProps> = ({ context, pages, is
             {/* Traduction terminee */
                 currentDialog === EDialog.SUCCESS &&
                 <StepDialog title={strings.TranslationDone} icon='SkypeCircleCheck' spinner={false} message={pages.length === 1 ? strings.PageTranslationSuccess : strings.PagesTranslationSuccess} nbButton={1} onClose={closeAndReset} />}
+            {/* Reussite partielle : detail des langues en echec a l'ecran */
+                currentDialog === EDialog.PARTIAL &&
+                <StepDialog title={strings.TranslationPartial} icon='Warning' spinner={false} message={partialMessage} nbButton={2} onClose={closeAndReset} primaryButton={startTranslation} />}
             {/* Erreur */
                 currentDialog === EDialog.ERROR &&
                 <StepDialog title={strings.Error} icon='StatusErrorFull' spinner={false} message={pages.length === 1 ? strings.PageTranslationError : strings.PagesTranslationError} nbButton={2} onClose={closeAndReset} primaryButton={startTranslation} />}

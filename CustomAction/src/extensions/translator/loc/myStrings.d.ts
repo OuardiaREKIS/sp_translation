@@ -18,6 +18,10 @@ declare interface ITranslatorCommandSetStrings {
   PagesTranslationSuccess: string;
   PageTranslationError: string;
   PagesTranslationError: string;
+  TranslationPartial: string;
+  PartialTranslationsDone: string;
+  FailedOn: string;
+  StillInProgress: string;
   Arabic: string;
   Azerbaijani: string;
   Basque: string;

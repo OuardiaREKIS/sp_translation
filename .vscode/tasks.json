@@ -8,7 +8,7 @@
 			"problemMatcher": "$func-powershell-watch",
 			"isBackground": true,
 			"options": {
-				"cwd": "${workspaceFolder}/AzureFunction"
+				"cwd": "${workspaceFolder}/AzureFunction/SP-Translator-FunctionApp"
 			}
 		}
 	]

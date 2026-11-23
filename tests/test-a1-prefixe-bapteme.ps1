@@ -1,6 +1,6 @@
 # A1 - Le motif de detection des titres de bapteme SharePoint, extrait du
 # run.ps1 de production (pas de duplication : si le code change, le test suit).
-$runPath = Join-Path $PSScriptRoot "..\AzureFunction2\SP-Translator-FunctionApp\HttpTriggerSpTranslator\run.ps1"
+$runPath = Join-Path $PSScriptRoot "..\AzureFunction\SP-Translator-FunctionApp\HttpTriggerSpTranslator\run.ps1"
 $run = (Get-Content -Raw $runPath) -replace "`r`n", "`n"
 $line = ($run -split "`n" | Where-Object { $_ -match '^\s*\$prefixPattern = ' }) -join ''
 if (-not $line) { Write-Host "[FAIL] prefixPattern introuvable dans run.ps1" -ForegroundColor Red; return 1 }

@@ -1,5 +1,5 @@
 # A2 - La derivation LCID -> code culture, extraite du run.ps1 de production.
-$runPath = Join-Path $PSScriptRoot "..\AzureFunction2\SP-Translator-FunctionApp\HttpTriggerSpTranslator\run.ps1"
+$runPath = Join-Path $PSScriptRoot "..\AzureFunction\SP-Translator-FunctionApp\HttpTriggerSpTranslator\run.ps1"
 $run = (Get-Content -Raw $runPath) -replace "`r`n", "`n"
 $line = ($run -split "`n" | Where-Object { $_ -match 'CultureInfo' }) | Select-Object -First 1
 if (-not $line) { Write-Host "[FAIL] ligne CultureInfo introuvable" -ForegroundColor Red; return 1 }

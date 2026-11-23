@@ -4,7 +4,7 @@
 
 Extension SharePoint Framework du projet **sp_translator** : traduction automatique
 des pages SharePoint via l'Azure Function `HttpTriggerSpTranslator` (dossier
-`../AzureFunction2`) et Azure AI Translator.
+`../AzureFunction`) et Azure AI Translator.
 
 Deux composants dans la même solution :
 
@@ -34,7 +34,7 @@ n'est jamais proposé sur une copie traduite (drapeau `_SPIsTranslation`).
 
 ## Test en local (sans déployer)
 
-1. Lancer la function : dans `../AzureFunction2/SP-Translator-FunctionApp` → `func start`
+1. Lancer la function : dans `../AzureFunction/SP-Translator-FunctionApp` → `func start`
    (nécessite Azure Functions Core Tools ; le certificat .pfx doit être accessible —
    renseigner `SP_CERT_PATH`/`SP_CERT_PASSWORD` dans `local.settings.json`, ou importer
    le .pfx dans le magasin de certificats utilisateur).

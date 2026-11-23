@@ -8,9 +8,9 @@
 param(
     [string]$Page = "TopicHome.aspx",
     [string]$SiteUrl = "https://m365x62999571.sharepoint.com/sites/IntranetMOSAIC",
-    [string]$ClientId = "<CLIENT-ID>",
+    [string]$ClientId = $env:SP_CLIENT_ID,
     [string]$Tenant = "m365x62999571.onmicrosoft.com",
-    [string]$Thumbprint = "<THUMBPRINT>"
+    [string]$Thumbprint = $env:SP_THUMBPRINT
 )
 
 # PnP.PowerShell est installe dans le dossier de modules de Windows PowerShell 5.1,

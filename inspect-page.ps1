@@ -18,8 +18,8 @@ $env:PSModulePath = "$HOME\Documents\PowerShell\Modules;$HOME\Documents\WindowsP
 Import-Module PnP.PowerShell -ErrorAction Stop
 
 Connect-PnPOnline -Url $SiteUrl `
-    -ClientId "<CLIENT-ID>" `
-    -Thumbprint "<THUMBPRINT>" `
+    -ClientId $env:SP_CLIENT_ID `
+    -Thumbprint $env:SP_THUMBPRINT `
     -Tenant "3whd6t.onmicrosoft.com" -ErrorAction Stop
 
 $p = Get-PnPPage -Identity $Page

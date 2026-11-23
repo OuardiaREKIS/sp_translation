@@ -8,9 +8,9 @@
 param(
     [switch]$All,
     [string]$SiteUrl = "https://m365x62999571.sharepoint.com/sites/IntranetMOSAIC",
-    [string]$ClientId = "<CLIENT-ID>",
+    [string]$ClientId = $env:SP_CLIENT_ID,
     [string]$Tenant = "m365x62999571.onmicrosoft.com",
-    [string]$Thumbprint = "<THUMBPRINT>"
+    [string]$Thumbprint = $env:SP_THUMBPRINT
 )
 
 $env:PSModulePath = "$HOME\Documents\PowerShell\Modules;$HOME\Documents\WindowsPowerShell\Modules;$env:PSModulePath"
